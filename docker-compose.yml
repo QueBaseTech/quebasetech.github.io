@@ -14,7 +14,7 @@ services:
     depends_on:
       - wordpress
     volumes:
-      - .:/var/www/html/
+      - ./wordpress/:/var/www/html/
 
   fix-mariadb-permissions:
     image: "bitnami/mariadb:10.1-master"

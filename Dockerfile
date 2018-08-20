@@ -15,9 +15,11 @@ RUN apt update -y && \
 
 WORKDIR /var/www/html
 
-COPY . /var/www/html
+COPY ./wordpress/* /var/www/html/
 
 RUN chown www-data:www-data -R /var/www/html/*
+
+ENV APACHE_DOCUMENT_ROOT /var/www/html/wordpress
 
 EXPOSE 80
 
