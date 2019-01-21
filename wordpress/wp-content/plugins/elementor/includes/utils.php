@@ -437,9 +437,7 @@ class Utils {
 
 		// Create a UTC+- zone if no timezone string exists.
 		if ( empty( $timezone_string ) ) {
-			if ( 0 === $current_offset ) {
-				$timezone_string = 'UTC+0';
-			} elseif ( $current_offset < 0 ) {
+			if ( $current_offset < 0 ) {
 				$timezone_string = 'UTC' . $current_offset;
 			} else {
 				$timezone_string = 'UTC+' . $current_offset;
@@ -537,7 +535,7 @@ class Utils {
 			'post_type' => $post_type,
 		], admin_url( 'edit.php' ) );
 
-		$new_post_url = wp_nonce_url( $new_post_url, 'elementor_action_new_post' );
+		$new_post_url = add_query_arg( '_wpnonce', wp_create_nonce( 'elementor_action_new_post' ), $new_post_url );
 
 		return $new_post_url;
 	}

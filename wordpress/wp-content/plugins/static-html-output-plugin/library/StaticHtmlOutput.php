@@ -7,7 +7,7 @@
  */
 class StaticHtmlOutput_Controller
 {
-    const  VERSION = '5.3' ;
+    const  VERSION = '5.8' ;
     const  OPTIONS_KEY = 'wp-static-html-output-options' ;
     const  HOOK = 'wp-static-html-output' ;
     protected static  $_instance = null ;
@@ -24,6 +24,54 @@ class StaticHtmlOutput_Controller
     {
     }
     
+    // new options for simplifying CLI/Client based exports
+    protected  $_selected_deployment_option ;
+    protected  $_baseUrl ;
+    protected  $_diffBasedDeploys ;
+    protected  $_target_folder ;
+    protected  $_rewriteWPCONTENT ;
+    protected  $_rewriteTHEMEROOT ;
+    protected  $_rewriteTHEMEDIR ;
+    protected  $_rewriteUPLOADS ;
+    protected  $_rewritePLUGINDIR ;
+    protected  $_rewriteWPINC ;
+    protected  $_sendViaGithub ;
+    protected  $_sendViaFTP ;
+    protected  $_sendViaS3 ;
+    protected  $_sendViaNetlify ;
+    protected  $_sendViaDropbox ;
+    protected  $_additionalUrls ;
+    protected  $_dontIncludeAllUploadFiles ;
+    protected  $_outputDirectory ;
+    protected  $_targetFolder ;
+    protected  $_githubRepo ;
+    protected  $_githubPersonalAccessToken ;
+    protected  $_githubBranch ;
+    protected  $_githubPath ;
+    protected  $_useRelativeURLs ;
+    protected  $_useBaseHref ;
+    protected  $_useBasicAuth ;
+    protected  $_basicAuthUser ;
+    protected  $_basicAuthPassword ;
+    protected  $_bunnycdnPullZoneName ;
+    protected  $_bunnycdnAPIKey ;
+    protected  $_bunnycdnRemotePath ;
+    protected  $_cfDistributionId ;
+    protected  $_s3Key ;
+    protected  $_s3Secret ;
+    protected  $_s3Region ;
+    protected  $_s3Bucket ;
+    protected  $_s3RemotePath ;
+    protected  $_dropboxAccessToken ;
+    protected  $_dropboxFolder ;
+    protected  $_netlifySiteID ;
+    protected  $_netlifyPersonalAccessToken ;
+    protected  $_ftpServer ;
+    protected  $_ftpUsername ;
+    protected  $_ftpPassword ;
+    protected  $_ftpRemotePath ;
+    protected  $_useActiveFTP ;
+    protected  $_allowOfflineUsage ;
     public static function getInstance()
     {
         
@@ -31,6 +79,202 @@ class StaticHtmlOutput_Controller
             self::$_instance = new self();
             self::$_instance->_options = new StaticHtmlOutput_Options( self::OPTIONS_KEY );
             self::$_instance->_view = new StaticHtmlOutput_View();
+            $tmp_var_to_hold_return_array = wp_upload_dir();
+            self::$_instance->_uploadsPath = $tmp_var_to_hold_return_array['basedir'];
+            self::$_instance->_uploadsURL = $tmp_var_to_hold_return_array['baseurl'];
+            // load settings via Client or from DB if run from CLI
+            
+            if ( null !== filter_input( INPUT_POST, 'selected_deployment_option' ) ) {
+                // export being triggered via GUI, set all options from filtered posts
+                self::$_instance->_selected_deployment_option = filter_input( INPUT_POST, 'selected_deployment_option' );
+                self::$_instance->_baseUrl = untrailingslashit( filter_input( INPUT_POST, 'baseUrl', FILTER_SANITIZE_URL ) );
+                self::$_instance->_diffBasedDeploys = filter_input( INPUT_POST, 'diffBasedDeploys' );
+                self::$_instance->_sendViaGithub = filter_input( INPUT_POST, 'sendViaGithub' );
+                self::$_instance->_sendViaFTP = filter_input( INPUT_POST, 'sendViaFTP' );
+                self::$_instance->_sendViaS3 = filter_input( INPUT_POST, 'sendViaS3' );
+                self::$_instance->_sendViaNetlify = filter_input( INPUT_POST, 'sendViaNetlify' );
+                self::$_instance->_sendViaDropbox = filter_input( INPUT_POST, 'sendViaDropbox' );
+                self::$_instance->_additionalUrls = filter_input( INPUT_POST, 'additionalUrls' );
+                self::$_instance->_dontIncludeAllUploadFiles = filter_input( INPUT_POST, 'dontIncludeAllUploadFiles' );
+                self::$_instance->_outputDirectory = filter_input( INPUT_POST, 'outputDirectory' );
+                self::$_instance->_targetFolder = filter_input( INPUT_POST, 'targetFolder' );
+                self::$_instance->_githubRepo = filter_input( INPUT_POST, 'githubRepo' );
+                self::$_instance->_githubPersonalAccessToken = filter_input( INPUT_POST, 'githubPersonalAccessToken' );
+                self::$_instance->_githubBranch = filter_input( INPUT_POST, 'githubBranch' );
+                self::$_instance->_githubPath = filter_input( INPUT_POST, 'githubPath' );
+                self::$_instance->_rewriteWPCONTENT = filter_input( INPUT_POST, 'rewriteWPCONTENT' );
+                self::$_instance->_rewriteTHEMEROOT = filter_input( INPUT_POST, 'rewriteTHEMEROOT' );
+                self::$_instance->_rewriteTHEMEDIR = filter_input( INPUT_POST, 'rewriteTHEMEDIR' );
+                self::$_instance->_rewriteUPLOADS = filter_input( INPUT_POST, 'rewriteUPLOADS' );
+                self::$_instance->_rewritePLUGINDIR = filter_input( INPUT_POST, 'rewritePLUGINDIR' );
+                self::$_instance->_rewriteWPINC = filter_input( INPUT_POST, 'rewriteWPINC' );
+                self::$_instance->_useRelativeURLs = filter_input( INPUT_POST, 'useRelativeURLs' );
+                self::$_instance->_useBaseHref = filter_input( INPUT_POST, 'useBaseHref' );
+                self::$_instance->_useBasicAuth = filter_input( INPUT_POST, 'sendViaBasic' );
+                self::$_instance->_basicAuthUser = filter_input( INPUT_POST, 'basicAuthUser' );
+                self::$_instance->_basicAuthPassword = filter_input( INPUT_POST, 'basicAuthPassword' );
+                self::$_instance->_bunnycdnPullZoneName = filter_input( INPUT_POST, 'bunnycdnPullZoneName' );
+                self::$_instance->_bunnycdnAPIKey = filter_input( INPUT_POST, 'bunnycdnAPIKey' );
+                self::$_instance->_bunnycdnRemotePath = filter_input( INPUT_POST, 'bunnycdnRemotePath' );
+                self::$_instance->_cfDistributionId = filter_input( INPUT_POST, 'cfDistributionId' );
+                self::$_instance->_s3Key = filter_input( INPUT_POST, 's3Key' );
+                self::$_instance->_s3Secret = filter_input( INPUT_POST, 's3Secret' );
+                self::$_instance->_s3Region = filter_input( INPUT_POST, 's3Region' );
+                self::$_instance->_s3Bucket = filter_input( INPUT_POST, 's3Bucket' );
+                self::$_instance->_s3RemotePath = filter_input( INPUT_POST, 's3RemotePath' );
+                self::$_instance->_dropboxAccessToken = filter_input( INPUT_POST, 'dropboxAccessToken' );
+                self::$_instance->_dropboxFolder = filter_input( INPUT_POST, 'dropboxFolder' );
+                self::$_instance->_netlifySiteID = filter_input( INPUT_POST, 'netlifySiteID' );
+                self::$_instance->_netlifyPersonalAccessToken = filter_input( INPUT_POST, 'netlifyPersonalAccessToken' );
+                self::$_instance->_ftpServer = filter_input( INPUT_POST, 'ftpServer' );
+                self::$_instance->_ftpUsername = filter_input( INPUT_POST, 'ftpUsername' );
+                self::$_instance->_ftpPassword = filter_input( INPUT_POST, 'ftpPassword' );
+                self::$_instance->_ftpRemotePath = filter_input( INPUT_POST, 'ftpRemotePath' );
+                self::$_instance->_useActiveFTP = filter_input( INPUT_POST, 'useActiveFTP' );
+                self::$_instance->_allowOfflineUsage = filter_input( INPUT_POST, 'allowOfflineUsage' );
+            } else {
+                // export being triggered via Cron/CLI, load settings from DB
+                parse_str( self::$_instance->_options->getOption( 'static-export-settings' ), $pluginOptions );
+                if ( array_key_exists( 'sendViaGithub', $pluginOptions ) ) {
+                    self::$_instance->_sendViaGithub = $pluginOptions['sendViaGithub'];
+                }
+                if ( array_key_exists( 'diffBasedDeploys', $pluginOptions ) ) {
+                    self::$_instance->_diffBasedDeploys = $pluginOptions['diffBasedDeploys'];
+                }
+                if ( array_key_exists( 'sendViaFTP', $pluginOptions ) ) {
+                    self::$_instance->_sendViaFTP = $pluginOptions['sendViaFTP'];
+                }
+                if ( array_key_exists( 'sendViaS3', $pluginOptions ) ) {
+                    self::$_instance->_sendViaS3 = $pluginOptions['sendViaS3'];
+                }
+                if ( array_key_exists( 'sendViaNetlify', $pluginOptions ) ) {
+                    self::$_instance->_sendViaNetlify = $pluginOptions['sendViaNetlify'];
+                }
+                if ( array_key_exists( 'sendViaDropbox', $pluginOptions ) ) {
+                    self::$_instance->_sendViaDropbox = $pluginOptions['sendViaDropbox'];
+                }
+                if ( array_key_exists( 'additionalUrls', $pluginOptions ) ) {
+                    self::$_instance->_additionalUrls = $pluginOptions['additionalUrls'];
+                }
+                if ( array_key_exists( 'dontIncludeAllUploadFiles', $pluginOptions ) ) {
+                    self::$_instance->_dontIncludeAllUploadFiles = $pluginOptions['dontIncludeAllUploadFiles'];
+                }
+                if ( array_key_exists( 'outputDirectory', $pluginOptions ) ) {
+                    self::$_instance->_outputDirectory = $pluginOptions['outputDirectory'];
+                }
+                if ( array_key_exists( 'targetFolder', $pluginOptions ) ) {
+                    self::$_instance->_targetFolder = $pluginOptions['targetFolder'];
+                }
+                if ( array_key_exists( 'selected_deployment_option', $pluginOptions ) ) {
+                    self::$_instance->_selected_deployment_option = $pluginOptions['selected_deployment_option'];
+                }
+                if ( array_key_exists( 'githubRepo', $pluginOptions ) ) {
+                    self::$_instance->_githubRepo = $pluginOptions['githubRepo'];
+                }
+                if ( array_key_exists( 'githubPersonalAccessToken', $pluginOptions ) ) {
+                    self::$_instance->_githubPersonalAccessToken = $pluginOptions['githubPersonalAccessToken'];
+                }
+                if ( array_key_exists( 'githubBranch', $pluginOptions ) ) {
+                    self::$_instance->_githubBranch = $pluginOptions['githubBranch'];
+                }
+                if ( array_key_exists( 'githubPath', $pluginOptions ) ) {
+                    self::$_instance->_githubPath = $pluginOptions['githubPath'];
+                }
+                if ( array_key_exists( 'rewriteWPCONTENT', $pluginOptions ) ) {
+                    self::$_instance->_rewriteWPCONTENT = $pluginOptions['rewriteWPCONTENT'];
+                }
+                if ( array_key_exists( 'rewriteTHEMEROOT', $pluginOptions ) ) {
+                    self::$_instance->_rewriteTHEMEROOT = $pluginOptions['rewriteTHEMEROOT'];
+                }
+                if ( array_key_exists( 'rewriteTHEMEDIR', $pluginOptions ) ) {
+                    self::$_instance->_rewriteTHEMEDIR = $pluginOptions['rewriteTHEMEDIR'];
+                }
+                if ( array_key_exists( 'rewriteUPLOADS', $pluginOptions ) ) {
+                    self::$_instance->_rewriteUPLOADS = $pluginOptions['rewriteUPLOADS'];
+                }
+                if ( array_key_exists( 'rewritePLUGINDIR', $pluginOptions ) ) {
+                    self::$_instance->_rewritePLUGINDIR = $pluginOptions['rewritePLUGINDIR'];
+                }
+                if ( array_key_exists( 'rewriteWPINC', $pluginOptions ) ) {
+                    self::$_instance->_rewriteWPINC = $pluginOptions['rewriteWPINC'];
+                }
+                if ( array_key_exists( 'useRelativeURLs', $pluginOptions ) ) {
+                    self::$_instance->_useRelativeURLs = $pluginOptions['useRelativeURLs'];
+                }
+                if ( array_key_exists( 'useBaseHref', $pluginOptions ) ) {
+                    self::$_instance->_useBaseHref = $pluginOptions['useBaseHref'];
+                }
+                if ( array_key_exists( 'baseUrl', $pluginOptions ) ) {
+                    self::$_instance->_baseUrl = untrailingslashit( $pluginOptions['baseUrl'] );
+                }
+                if ( array_key_exists( 'sendViaBasic', $pluginOptions ) ) {
+                    self::$_instance->_useBasicAuth = $pluginOptions['sendViaBasic'];
+                }
+                if ( array_key_exists( 'basicAuthUser', $pluginOptions ) ) {
+                    self::$_instance->_basicAuthUser = $pluginOptions['basicAuthUser'];
+                }
+                if ( array_key_exists( 'basicAuthPassword', $pluginOptions ) ) {
+                    self::$_instance->_basicAuthUser = $pluginOptions['basicAuthUser'];
+                }
+                if ( array_key_exists( 'bunnycdnPullZoneName', $pluginOptions ) ) {
+                    self::$_instance->_bunnycdnPullZoneName = $pluginOptions['bunnycdnPullZoneName'];
+                }
+                if ( array_key_exists( 'bunnycdnAPIKey', $pluginOptions ) ) {
+                    self::$_instance->_bunnycdnAPIKey = $pluginOptions['bunnycdnAPIKey'];
+                }
+                if ( array_key_exists( 'bunnycdnRemotePath', $pluginOptions ) ) {
+                    self::$_instance->_bunnycdnRemotePath = $pluginOptions['bunnycdnRemotePath'];
+                }
+                if ( array_key_exists( 'cfDistributionId', $pluginOptions ) ) {
+                    self::$_instance->_cfDistributionId = $pluginOptions['cfDistributionId'];
+                }
+                if ( array_key_exists( 's3Key', $pluginOptions ) ) {
+                    self::$_instance->_s3Key = $pluginOptions['s3Key'];
+                }
+                if ( array_key_exists( 's3Secret', $pluginOptions ) ) {
+                    self::$_instance->_s3Secret = $pluginOptions['s3Secret'];
+                }
+                if ( array_key_exists( 's3Region', $pluginOptions ) ) {
+                    self::$_instance->_s3Region = $pluginOptions['s3Region'];
+                }
+                if ( array_key_exists( 's3Bucket', $pluginOptions ) ) {
+                    self::$_instance->_s3Bucket = $pluginOptions['s3Bucket'];
+                }
+                if ( array_key_exists( 's3RemotePath', $pluginOptions ) ) {
+                    self::$_instance->_s3RemotePath = $pluginOptions['s3RemotePath'];
+                }
+                if ( array_key_exists( 'dropboxFolder', $pluginOptions ) ) {
+                    self::$_instance->_dropboxFolder = $pluginOptions['dropboxFolder'];
+                }
+                if ( array_key_exists( 'dropboxAccessToken', $pluginOptions ) ) {
+                    self::$_instance->_dropboxAccessToken = $pluginOptions['dropboxAccessToken'];
+                }
+                if ( array_key_exists( 'netlifySiteID', $pluginOptions ) ) {
+                    self::$_instance->_netlifySiteID = $pluginOptions['netlifySiteID'];
+                }
+                if ( array_key_exists( 'netlifyPersonalAccessToken', $pluginOptions ) ) {
+                    self::$_instance->_netlifyPersonalAccessToken = $pluginOptions['netlifyPersonalAccessToken'];
+                }
+                if ( array_key_exists( 'ftpServer', $pluginOptions ) ) {
+                    self::$_instance->_ftpServer = $pluginOptions['ftpServer'];
+                }
+                if ( array_key_exists( 'ftpUsername', $pluginOptions ) ) {
+                    self::$_instance->_ftpUsername = $pluginOptions['ftpUsername'];
+                }
+                if ( array_key_exists( 'ftpPassword', $pluginOptions ) ) {
+                    self::$_instance->_ftpPassword = $pluginOptions['ftpPassword'];
+                }
+                if ( array_key_exists( 'ftpRemotePath', $pluginOptions ) ) {
+                    self::$_instance->_ftpRemotePath = $pluginOptions['ftpRemotePath'];
+                }
+                if ( array_key_exists( 'useActiveFTP', $pluginOptions ) ) {
+                    self::$_instance->_useActiveFTP = $pluginOptions['useActiveFTP'];
+                }
+                if ( array_key_exists( 'allowOfflineUsage', $pluginOptions ) ) {
+                    self::$_instance->_allowOfflineUsage = $pluginOptions['allowOfflineUsage'];
+                }
+            }
+        
         }
         
         return self::$_instance;
@@ -39,9 +283,6 @@ class StaticHtmlOutput_Controller
     public static function init( $bootstrapFile )
     {
         $instance = self::getInstance();
-        $tmp_var_to_hold_return_array = wp_upload_dir();
-        $instance->_uploadsPath = $tmp_var_to_hold_return_array['basedir'];
-        $instance->_uploadsURL = $tmp_var_to_hold_return_array['baseurl'];
         register_activation_hook( $bootstrapFile, array( $instance, 'activate' ) );
         
         if ( is_admin() ) {
@@ -79,11 +320,28 @@ class StaticHtmlOutput_Controller
         // required
     }
     
-    public function activate()
+    public function activate_for_single_site()
     {
         if ( null === $this->_options->getOption( 'version' ) ) {
             $this->_options->setOption( 'version', self::VERSION )->setOption( 'static_export_settings', self::VERSION )->save();
         }
+    }
+    
+    public function activate( $network_wide )
+    {
+        
+        if ( $network_wide ) {
+            global  $wpdb ;
+            $site_ids = $wpdb->get_col( "SELECT blog_id FROM {$wpdb->blogs} WHERE site_id = {$wpdb->siteid};" );
+            foreach ( $site_ids as $site_id ) {
+                switch_to_blog( $site_id );
+                $this->activate_for_single_site();
+            }
+            restore_current_blog();
+        } else {
+            $this->activate_for_single_site();
+        }
+    
     }
     
     public function registerOptionsPage()
@@ -111,12 +369,11 @@ class StaticHtmlOutput_Controller
     {
         // Check system requirements
         $uploadsFolderWritable = $this->_uploadsPath && is_writable( $this->_uploadsPath );
-        $supportsZipArchives = extension_loaded( 'zip' );
         $supports_cURL = extension_loaded( 'curl' );
         $permalinksStructureDefined = strlen( get_option( 'permalink_structure' ) );
         
-        if ( !$uploadsFolderWritable || !$supportsZipArchives || !$permalinksStructureDefined || !$supports_cURL ) {
-            $this->_view->setTemplate( 'system-requirements' )->assign( 'uploadsFolderWritable', $uploadsFolderWritable )->assign( 'supportsZipArchives', $supportsZipArchives )->assign( 'supports_cURL', $supports_cURL )->assign( 'permalinksStructureDefined', $permalinksStructureDefined )->assign( 'uploadsPath', $this->_uploadsPath )->render();
+        if ( !$uploadsFolderWritable || !$permalinksStructureDefined || !$supports_cURL ) {
+            $this->_view->setTemplate( 'system-requirements' )->assign( 'uploadsFolderWritable', $uploadsFolderWritable )->assign( 'supports_cURL', $supports_cURL )->assign( 'permalinksStructureDefined', $permalinksStructureDefined )->assign( 'uploadsPath', $this->_uploadsPath )->render();
         } else {
             do_action( self::HOOK . '-saveOptions' );
             $wp_upload_dir = wp_upload_dir();
@@ -147,8 +404,8 @@ class StaticHtmlOutput_Controller
             }
         }
         // override if user has specified it in the UI
-        if ( !filter_input( INPUT_POST, 'outputDirectory' ) ) {
-            $outputDir = filter_input( INPUT_POST, 'outputDirectory' );
+        if ( !$this->_outputDirectory ) {
+            $outputDir = $this->_outputDirectory;
         }
         if ( !is_dir( $outputDir ) ) {
             // reverting back to default uploads path
@@ -169,29 +426,79 @@ class StaticHtmlOutput_Controller
         $filesRemaining = count( $exportTargets ) - 1;
         $first_line = array_shift( $exportTargets );
         file_put_contents( $exportTargetsFile, implode( "\r\n", $exportTargets ) );
-        WsLog::l( 'PROGRESS: Starting export type:' . $target . PHP_EOL );
     }
     
-    public function github_upload_blobs()
+    public function github_upload_blobs( $viaCLI = false )
     {
+        $github = new StaticHtmlOutput_GitHub(
+            $this->_githubRepo,
+            $this->_githubPersonalAccessToken,
+            $this->_githubBranch,
+            $this->_githubPath,
+            $this->_uploadsPath
+        );
+        $github->upload_blobs( $viaCLI );
     }
     
     public function github_prepare_export()
     {
+        $github = new StaticHtmlOutput_GitHub(
+            $this->_githubRepo,
+            $this->_githubPersonalAccessToken,
+            $this->_githubBranch,
+            $this->_githubPath,
+            $this->_uploadsPath
+        );
+        $github->prepare_deployment();
     }
     
     public function github_finalise_export()
     {
+        $github = new StaticHtmlOutput_GitHub(
+            $this->_githubRepo,
+            $this->_githubPersonalAccessToken,
+            $this->_githubBranch,
+            $this->_githubPath,
+            $this->_uploadsPath
+        );
+        $github->commit_new_tree();
+    }
+    
+    public function capture_last_deployment()
+    {
+        // skip for first export state
+        
+        if ( is_file( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' ) ) {
+            $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
+            $previous_export = $archiveDir;
+            $dir_to_diff_against = $this->outputPath() . '/previous-export';
+            
+            if ( $this->_diffBasedDeploys ) {
+                $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
+                $previous_export = $archiveDir;
+                $dir_to_diff_against = $this->outputPath() . '/previous-export';
+                if ( is_dir( $previous_export ) ) {
+                    shell_exec( "rm -Rf {$dir_to_diff_against} && mkdir -p {$dir_to_diff_against} && cp -r {$previous_export}/* {$dir_to_diff_against}" );
+                }
+            } else {
+                
+                if ( is_dir( $dir_to_diff_against ) ) {
+                    StaticHtmlOutput_FilesHelper::delete_dir_with_files( $dir_to_diff_against );
+                    StaticHtmlOutput_FilesHelper::delete_dir_with_files( $archiveDir );
+                }
+            
+            }
+        
+        }
+        
+        echo  'SUCCESS' ;
     }
     
     public function cleanup_leftover_archives()
     {
-        WsLog::l( 'CLEANUP LEFTOVER ARCHIVES: ' . $this->_uploadsPath );
         $leftover_files = preg_grep( '/^([^.])/', scandir( $this->_uploadsPath ) );
         foreach ( $leftover_files as $fileName ) {
-            
             if ( strpos( $fileName, 'wp-static-html-output-' ) !== false ) {
-                WsLog::l( 'cleaning up a previous export dir or zip: ' . $fileName );
                 
                 if ( is_dir( $this->_uploadsPath . '/' . $fileName ) ) {
                     StaticHtmlOutput_FilesHelper::delete_dir_with_files( $this->_uploadsPath . '/' . $fileName );
@@ -200,7 +507,6 @@ class StaticHtmlOutput_Controller
                 }
             
             }
-        
         }
         echo  'SUCCESS' ;
     }
@@ -229,7 +535,18 @@ class StaticHtmlOutput_Controller
     // clean up files possibly left behind by a partial export
     public function cleanup_working_files()
     {
-        WsLog::l( 'CLEANING WORKING FILES:' );
+        // skip first explort state
+        
+        if ( is_file( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' ) ) {
+            $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
+            $dir_to_diff_against = $this->outputPath() . '/previous-export';
+            if ( is_dir( $dir_to_diff_against ) ) {
+                // TODO: rewrite to php native in case of shared hosting
+                // delete archivedir and then recursively copy
+                shell_exec( "cp -r {$dir_to_diff_against}/* {$archiveDir}/" );
+            }
+        }
+        
         $files_to_clean = array(
             '/WP-STATIC-EXPORT-TARGETS',
             '/WP-STATIC-EXPORT-S3-FILES-TO-EXPORT',
@@ -251,37 +568,21 @@ class StaticHtmlOutput_Controller
     public function start_export( $viaCLI = false )
     {
         $this->pre_export_cleanup();
-        // set options from GUI or override via CLI
-        $sendViaGithub = filter_input( INPUT_POST, 'sendViaGithub' );
-        $sendViaFTP = filter_input( INPUT_POST, 'sendViaFTP' );
-        $sendViaS3 = filter_input( INPUT_POST, 'sendViaS3' );
-        $sendViaNetlify = filter_input( INPUT_POST, 'sendViaNetlify' );
-        $sendViaDropbox = filter_input( INPUT_POST, 'sendViaDropbox' );
-        
-        if ( $viaCLI ) {
-            parse_str( $this->_options->getOption( 'static-export-settings' ), $pluginOptions );
-            $sendViaGithub = $pluginOptions['sendViaGithub'];
-            $sendViaFTP = $pluginOptions['sendViaFTP'];
-            $sendViaS3 = $pluginOptions['sendViaS3'];
-            $sendViaNetlify = $pluginOptions['sendViaNetlify'];
-            $sendViaDropbox = $pluginOptions['sendViaDropbox'];
-        }
-        
         $exportTargetsFile = $this->_uploadsPath . '/WP-STATIC-EXPORT-TARGETS';
         // add each export target to file
-        if ( $sendViaGithub == 1 ) {
+        if ( $this->_sendViaGithub == 1 ) {
             file_put_contents( $exportTargetsFile, 'GITHUB' . PHP_EOL, FILE_APPEND | LOCK_EX );
         }
-        if ( $sendViaFTP == 1 ) {
+        if ( $this->_sendViaFTP == 1 ) {
             file_put_contents( $exportTargetsFile, 'FTP' . PHP_EOL, FILE_APPEND | LOCK_EX );
         }
-        if ( $sendViaS3 == 1 ) {
+        if ( $this->_sendViaS3 == 1 ) {
             file_put_contents( $exportTargetsFile, 'S3' . PHP_EOL, FILE_APPEND | LOCK_EX );
         }
-        if ( $sendViaNetlify == 1 ) {
+        if ( $this->_sendViaNetlify == 1 ) {
             file_put_contents( $exportTargetsFile, 'NETLIFY' . PHP_EOL, FILE_APPEND | LOCK_EX );
         }
-        if ( $sendViaDropbox == 1 ) {
+        if ( $this->_sendViaDropbox == 1 ) {
             file_put_contents( $exportTargetsFile, 'DROPBOX' . PHP_EOL, FILE_APPEND | LOCK_EX );
         }
         // initilise log with environmental info
@@ -296,27 +597,16 @@ class StaticHtmlOutput_Controller
         WsLog::l( 'STARTING EXPORT: WP ADDRESS ' . get_bloginfo( 'wpurl' ) );
         WsLog::l( 'STARTING EXPORT: PLUGIN VERSION ' . $this::VERSION );
         WsLog::l( 'STARTING EXPORT: VIA CLI? ' . $viaCLI );
-        WsLog::l( 'STARTING EXPORT: STATIC EXPORT URL ' . filter_input( INPUT_POST, 'baseUrl' ) );
-        // set options from GUI or CLI
-        $additionalUrls = filter_input( INPUT_POST, 'additionalUrls' );
-        
-        if ( $viaCLI ) {
-            // read options from DB as array
-            parse_str( $this->_options->getOption( 'static-export-settings' ), $pluginOptions );
-            $newBaseURL = $pluginOptions['baseUrl'];
-            $additionalUrls = $pluginOptions['additionalUrls'];
-        }
-        
+        WsLog::l( 'STARTING EXPORT: STATIC EXPORT URL ' . $this->_baseUrl );
         $initial_file_list_count = StaticHtmlOutput_FilesHelper::buildInitialFileList(
             $viaCLI,
-            $additionalUrls,
+            $this->_additionalUrls,
             $this->_uploadsPath,
             $this->_uploadsURL,
             $this->outputPath(),
             self::HOOK,
-            !filter_input( INPUT_POST, 'dontIncludeAllUploadFiles' )
+            !$this->_dontIncludeAllUploadFiles
         );
-        WsLog::l( 'STARTING EXPORT: initial crawl list contains ' . $initial_file_list_count . ' files' );
         echo  'SUCCESS' ;
     }
     
@@ -344,15 +634,13 @@ class StaticHtmlOutput_Controller
     
     public function copyStaticSiteToPublicFolder()
     {
-        // TODO: switch for CLI driven
         
-        if ( filter_input( INPUT_POST, 'selected_deployment_option' ) == 'folder' ) {
-            $publicFolderToCopyTo = filter_input( INPUT_POST, 'targetFolder' );
+        if ( $this->_selected_deployment_option == 'folder' ) {
+            $publicFolderToCopyTo = trim( $this->_targetFolder );
             
-            if ( !empty(trim( $publicFolderToCopyTo )) ) {
+            if ( !empty($publicFolderToCopyTo) ) {
                 // if folder isn't empty and current deployment option is "folder"
                 $publicFolderToCopyTo = ABSPATH . $publicFolderToCopyTo;
-                WsLog::l( 'DEPLOYING TO PUBLIC URL: ' . $publicFolderToCopyTo );
                 // mkdir for the new dir
                 
                 if ( !file_exists( $publicFolderToCopyTo ) ) {
@@ -387,22 +675,11 @@ class StaticHtmlOutput_Controller
         $first_line = array_shift( $initial_crawl_list );
         file_put_contents( $initial_crawl_list_file, implode( "\r\n", $initial_crawl_list ) );
         $currentUrl = $first_line;
-        WsLog::l( 'CRAWLING URL: ' . $currentUrl );
-        $newBaseUrl = untrailingslashit( filter_input( INPUT_POST, 'baseUrl', FILTER_SANITIZE_URL ) );
-        // override options if running via CLI
-        
-        if ( $viaCLI ) {
-            parse_str( $this->_options->getOption( 'static-export-settings' ), $pluginOptions );
-            $newBaseUrl = $pluginOptions['baseUrl'];
-        }
-        
         
         if ( empty($currentUrl) ) {
-            WsLog::l( 'EMPTY FILE ENCOUNTERED' );
             // skip this empty file
             $f = file( $initial_crawl_list_file, FILE_IGNORE_NEW_LINES );
             $filesRemaining = count( $f );
-            WsLog::l( 'CRAWLING SITE: ' . $filesRemaining . ' files remaining' );
             
             if ( $filesRemaining > 0 ) {
                 echo  $filesRemaining ;
@@ -414,9 +691,9 @@ class StaticHtmlOutput_Controller
         }
         
         $basicAuth = array(
-            'useBasicAuth'      => filter_input( INPUT_POST, 'sendViaBasic' ),
-            'basicAuthUser'     => filter_input( INPUT_POST, 'basicAuthUser' ),
-            'basicAuthPassword' => filter_input( INPUT_POST, 'basicAuthPassword' ),
+            'useBasicAuth'      => $this->_useBasicAuth,
+            'basicAuthUser'     => $this->_basicAuthUser,
+            'basicAuthPassword' => $this->_basicAuthPassword,
         );
         $urlResponse = new StaticHtmlOutput_UrlRequest( $currentUrl, $basicAuth );
         $urlResponseForFurtherExtraction = new StaticHtmlOutput_UrlRequest( $currentUrl, $basicAuth );
@@ -425,7 +702,6 @@ class StaticHtmlOutput_Controller
             WsLog::l( 'FAILED TO CRAWL FILE: ' . $currentUrl );
         } else {
             file_put_contents( $crawled_links_file, $currentUrl . PHP_EOL, FILE_APPEND | LOCK_EX );
-            WsLog::l( 'CRAWLED FILE: ' . $currentUrl );
         }
         
         $baseUrl = untrailingslashit( home_url() );
@@ -440,24 +716,29 @@ class StaticHtmlOutput_Controller
             'wp_active_theme' => str_replace( home_url(), '', get_template_directory_uri() ),
             'site_url'        => get_site_url(),
         );
-        $new_wp_content = '/' . filter_input( INPUT_POST, 'rewriteWPCONTENT' );
-        $new_theme_root = $new_wp_content . '/' . filter_input( INPUT_POST, 'rewriteTHEMEROOT' );
-        $new_theme_dir = $new_theme_root . '/' . filter_input( INPUT_POST, 'rewriteTHEMEDIR' );
-        $new_uploads_dir = $new_wp_content . '/' . filter_input( INPUT_POST, 'rewriteUPLOADS' );
-        $new_plugins_dir = $new_wp_content . '/' . filter_input( INPUT_POST, 'rewritePLUGINDIR' );
+        $new_wp_content = '/' . $this->_rewriteWPCONTENT;
+        $new_theme_root = $new_wp_content . '/' . $this->_rewriteTHEMEROOT;
+        $new_theme_dir = $new_theme_root . '/' . $this->_rewriteTHEMEDIR;
+        $new_uploads_dir = $new_wp_content . '/' . $this->_rewriteUPLOADS;
+        $new_plugins_dir = $new_wp_content . '/' . $this->_rewritePLUGINDIR;
         $overwrite_slug_targets = array(
             'new_wp_content_path'   => $new_wp_content,
             'new_themes_path'       => $new_theme_root,
             'new_active_theme_path' => $new_theme_dir,
             'new_uploads_path'      => $new_uploads_dir,
             'new_plugins_path'      => $new_plugins_dir,
-            'new_wpinc_path'        => '/' . filter_input( INPUT_POST, 'rewriteWPINC' ),
+            'new_wpinc_path'        => '/' . $this->_rewriteWPINC,
         );
         $urlResponse->cleanup( $wp_site_environment, $overwrite_slug_targets );
-        $useRelativeURLs = filter_input( INPUT_POST, 'useRelativeURLs' );
         // TODO: if it replaces baseurl here, it will be searching links starting with that...
         // TODO: shouldn't be doing this here...
-        $urlResponse->replaceBaseUrl( $baseUrl, $newBaseUrl, $useRelativeURLs );
+        $urlResponse->replaceBaseUrl(
+            $baseUrl,
+            $this->_baseUrl,
+            $this->_allowOfflineUsage,
+            $this->_useRelativeURLs,
+            $this->_useBaseHref
+        );
         $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
         $this->_saveUrlData( $urlResponse, $archiveDir );
         // try extracting urls from a response that hasn't been changed yet...
@@ -467,7 +748,6 @@ class StaticHtmlOutput_Controller
             $extension = pathinfo( $path, PATHINFO_EXTENSION );
             
             if ( $newUrl != $currentUrl && !in_array( $newUrl, $crawled_links ) && $extension != 'php' && !in_array( $newUrl, $initial_crawl_list ) ) {
-                WsLog::l( 'DISCOVERED NEW FILE: ' . $newUrl );
                 $urlResponse = new StaticHtmlOutput_UrlRequest( $newUrl, $basicAuth );
                 
                 if ( $urlResponse->checkResponse() == 'FAIL' ) {
@@ -475,11 +755,16 @@ class StaticHtmlOutput_Controller
                 } else {
                     file_put_contents( $crawled_links_file, $newUrl . PHP_EOL, FILE_APPEND | LOCK_EX );
                     $crawled_links[] = $newUrl;
-                    WsLog::l( 'CRAWLED FILE: ' . $newUrl );
                 }
                 
                 $urlResponse->cleanup( $wp_site_environment, $overwrite_slug_targets );
-                $urlResponse->replaceBaseUrl( $baseUrl, $newBaseUrl, $useRelativeURLs );
+                $urlResponse->replaceBaseUrl(
+                    $baseUrl,
+                    $this->_baseUrl,
+                    $this->_allowOfflineUsage,
+                    $this->_useRelativeURLs,
+                    $this->_useBaseHref
+                );
                 $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
                 $this->_saveUrlData( $urlResponse, $archiveDir );
             }
@@ -488,7 +773,6 @@ class StaticHtmlOutput_Controller
         // TODO: could avoid reading file again here as we should have it above
         $f = file( $initial_crawl_list_file, FILE_IGNORE_NEW_LINES );
         $filesRemaining = count( $f );
-        WsLog::l( 'CRAWLING SITE: ' . $filesRemaining . ' files remaining' );
         
         if ( $filesRemaining > 0 ) {
             echo  $filesRemaining ;
@@ -513,7 +797,6 @@ class StaticHtmlOutput_Controller
     
     public function create_zip()
     {
-        WsLog::l( 'CREATING ZIP FILE...' );
         $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
         $archiveName = rtrim( $archiveDir, '/' );
         $tempZip = $archiveName . '.tmp';
@@ -534,7 +817,6 @@ class StaticHtmlOutput_Controller
         $zipDownloadLink = $archiveName . '.zip';
         rename( $tempZip, $zipDownloadLink );
         $publicDownloadableZip = str_replace( ABSPATH, trailingslashit( home_url() ), $archiveName . '.zip' );
-        WsLog::l( 'ZIP CREATED: Download at ' . $publicDownloadableZip );
         echo  'SUCCESS' ;
         // TODO: put the zip url somewhere in the interface
         //echo $publicDownloadableZip;
@@ -542,17 +824,35 @@ class StaticHtmlOutput_Controller
     
     public function ftp_prepare_export()
     {
+        $ftp = new StaticHtmlOutput_FTP(
+            $this->_ftpServer,
+            $this->_ftpUsername,
+            $this->_ftpPassword,
+            $this->_ftpRemotePath,
+            $this->_useActiveFTP,
+            $this->_uploadsPath
+        );
+        $ftp->prepare_deployment();
     }
     
-    public function ftp_transfer_files( $batch_size = 5 )
+    public function ftp_transfer_files( $viaCLI = false )
     {
+        $ftp = new StaticHtmlOutput_FTP(
+            $this->_ftpServer,
+            $this->_ftpUsername,
+            $this->_ftpPassword,
+            $this->_ftpRemotePath,
+            $this->_useActiveFTP,
+            $this->_uploadsPath
+        );
+        $ftp->transfer_files( $viaCLI );
     }
     
     public function bunnycdn_prepare_export()
     {
     }
     
-    public function bunnycdn_transfer_files()
+    public function bunnycdn_transfer_files( $viaCLI = false )
     {
     }
     
@@ -562,7 +862,6 @@ class StaticHtmlOutput_Controller
     
     public function prepare_file_list( $export_target )
     {
-        WsLog::l( $export_target . ' EXPORT: Preparing list of files to export' );
         $file_list_path = $this->_uploadsPath . '/WP-STATIC-EXPORT-' . $export_target . '-FILES-TO-EXPORT';
         // zero file
         $f = @fopen( $file_list_path, "r+" );
@@ -575,15 +874,15 @@ class StaticHtmlOutput_Controller
         $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
         $archiveName = rtrim( $archiveDir, '/' );
         $siteroot = $archiveName . '/';
+        error_log( 'preparing file list' );
         StaticHtmlOutput_FilesHelper::recursively_scan_dir( $siteroot, $siteroot, $file_list_path );
-        WsLog::l( 'GENERIC EXPORT: File list prepared' );
     }
     
     public function s3_prepare_export()
     {
     }
     
-    public function s3_transfer_files()
+    public function s3_transfer_files( $viaCLI = false )
     {
     }
     
@@ -593,28 +892,86 @@ class StaticHtmlOutput_Controller
     
     public function dropbox_prepare_export()
     {
+        $dropbox = new StaticHtmlOutput_Dropbox( $this->_dropboxAccessToken, $this->_dropboxFolder, $this->_uploadsPath );
+        $dropbox->prepare_export();
     }
     
-    public function dropbox_do_export()
+    public function dropbox_do_export( $viaCLI = false )
     {
+        $dropbox = new StaticHtmlOutput_Dropbox( $this->_dropboxAccessToken, $this->_dropboxFolder, $this->_uploadsPath );
+        $dropbox->transfer_files( $viaCLI );
     }
     
     public function netlify_do_export()
     {
+        // will exclude the siteroot when copying
+        $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
+        $archiveName = rtrim( $archiveDir, '/' ) . '.zip';
+        $netlify = new StaticHtmlOutput_Netlify( $this->_netlifySiteID, $this->_netlifyPersonalAccessToken );
+        echo  $netlify->deploy( $archiveName ) ;
+    }
+    
+    public function deploy()
+    {
+        switch ( $this->_selected_deployment_option ) {
+            case 'folder':
+                $this->copyStaticSiteToPublicFolder();
+                break;
+            case 'github':
+                $this->github_prepare_export();
+                $this->github_upload_blobs( true );
+                $this->github_finalise_export();
+                break;
+            case 'ftp':
+                $this->ftp_prepare_export();
+                $this->ftp_transfer_files( true );
+                break;
+            case 'netlify':
+                $this->create_zip();
+                $this->netlify_do_export();
+                break;
+            case 'zip':
+                $this->create_zip();
+                break;
+            case 's3':
+                $this->s3_prepare_export();
+                $this->s3_transfer_files( true );
+                $this->cloudfront_invalidate_all_items();
+                break;
+            case 'bunnycdn':
+                $this->bunnycdn_prepare_export();
+                $this->bunnycdn_transfer_files( true );
+                break;
+            case 'dropbox':
+                $this->dropbox_prepare_export();
+                $this->dropbox_do_export( true );
+                break;
+        }
+        error_log( 'scheduled deploy complete' );
+        // TODO: email upon successful cron deploy
+        // $current_user = wp_get_current_user();
+        // $to = $current_user->user_email;
+        // $subject = 'Static site deployment: ' . $site_title = get_bloginfo( 'name' );;
+        // $body = 'Your WordPress site has been automatically deployed.';
+        // $headers = array('Content-Type: text/html; charset=UTF-8');
+        //
+        // wp_mail( $to, $subject, $body, $headers );
     }
     
     public function doExportWithoutGUI()
     {
         
         if ( wpsho_fr()->is_plan( 'professional_edition' ) ) {
-            // TODO: get parity with UI export options
-            // start export, including build initial file list
+            //$this->capture_last_deployment();
+            $this->cleanup_leftover_archives( true );
             $this->start_export( true );
-            // do the crawl
             $this->crawl_site( true );
-            // create zip
-            $this->create_zip();
-            // TODO: run any other enabled exports
+            $this->create_symlink_to_latest_archive( true );
+            $this->post_process_archive_dir( true );
+            $this->deploy();
+            $this->post_export_teardown();
+            $this->record_successful_export();
+            //$this->create_zip();
         }
     
     }
@@ -666,14 +1023,13 @@ class StaticHtmlOutput_Controller
             $this->_subdirectory = '/mysubdirectory';
         }
         $base_url = parse_url( $site_url );
-        if ( $base_url['path'] != '/' ) {
+        if ( array_key_exists( 'path', $base_url ) && $base_url['path'] != '/' ) {
             $this->_subdirectory = $base_url['path'];
         }
     }
     
     public function post_process_archive_dir()
     {
-        WsLog::l( 'POST PROCESSING ARCHIVE DIR: ...' );
         $archiveDir = untrailingslashit( file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' ) );
         $this->detect_base_url();
         $archiveDir .= $this->_subdirectory;
@@ -683,16 +1039,16 @@ class StaticHtmlOutput_Controller
         // TODO: check if this has been modified/use constant
         // rename the theme theme root before the nested theme dir
         // rename the theme directory
-        $new_wp_content = $archiveDir . '/' . filter_input( INPUT_POST, 'rewriteWPCONTENT' );
-        $new_theme_root = $new_wp_content . '/' . filter_input( INPUT_POST, 'rewriteTHEMEROOT' );
-        $new_theme_dir = $new_theme_root . '/' . filter_input( INPUT_POST, 'rewriteTHEMEDIR' );
+        $new_wp_content = $archiveDir . '/' . $this->_rewriteWPCONTENT;
+        $new_theme_root = $new_wp_content . '/' . $this->_rewriteTHEMEROOT;
+        $new_theme_dir = $new_theme_root . '/' . $this->_rewriteTHEMEDIR;
         // rewrite uploads dir
         $default_upload_dir = wp_upload_dir();
         // need to store as var first
         $updated_uploads_dir = str_replace( ABSPATH, '', $default_upload_dir['basedir'] );
         $updated_uploads_dir = str_replace( 'wp-content/', '', $updated_uploads_dir );
         $updated_uploads_dir = $new_wp_content . '/' . $updated_uploads_dir;
-        $new_uploads_dir = $new_wp_content . '/' . filter_input( INPUT_POST, 'rewriteUPLOADS' );
+        $new_uploads_dir = $new_wp_content . '/' . $this->_rewriteUPLOADS;
         $updated_theme_root = str_replace( ABSPATH, '/', get_theme_root() );
         $updated_theme_root = $new_wp_content . str_replace( 'wp-content', '/', $updated_theme_root );
         $updated_theme_dir = $new_theme_root . '/' . basename( get_template_directory_uri() );
@@ -701,27 +1057,21 @@ class StaticHtmlOutput_Controller
         $updated_plugins_dir = str_replace( ABSPATH, '/', WP_PLUGIN_DIR );
         $updated_plugins_dir = str_replace( 'wp-content/', '', $updated_plugins_dir );
         $updated_plugins_dir = $new_wp_content . $updated_plugins_dir;
-        $new_plugins_dir = $new_wp_content . '/' . filter_input( INPUT_POST, 'rewritePLUGINDIR' );
+        $new_plugins_dir = $new_wp_content . '/' . $this->_rewritePLUGINDIR;
         // rewrite wp-includes  dir
         $original_wp_includes = $archiveDir . '/' . WPINC;
-        $new_wp_includes = $archiveDir . '/' . filter_input( INPUT_POST, 'rewriteWPINC' );
+        $new_wp_includes = $archiveDir . '/' . $this->_rewriteWPINC;
         // TODO: subdir installations are not being correctly detected here
-        //
-        
-        if ( !rename( $original_wp_content, $new_wp_content ) ) {
-            WsLog::l( 'POST PROCESSING ARCHIVE DIR: Failed to rename ' . $original_wp_content );
-            echo  'FAIL' ;
-        }
-        
+        $this->rename_populated_directory( $original_wp_content, $new_wp_content );
         if ( file_exists( $updated_uploads_dir ) ) {
-            rename( $updated_uploads_dir, $new_uploads_dir );
+            $this->rename_populated_directory( $updated_uploads_dir, $new_uploads_dir );
         }
-        rename( $updated_theme_root, $new_theme_root );
-        rename( $updated_theme_dir, $new_theme_dir );
+        $this->rename_populated_directory( $updated_theme_root, $new_theme_root );
+        $this->rename_populated_directory( $updated_theme_dir, $new_theme_dir );
         if ( file_exists( $updated_plugins_dir ) ) {
-            rename( $updated_plugins_dir, $new_plugins_dir );
+            $this->rename_populated_directory( $updated_plugins_dir, $new_plugins_dir );
         }
-        rename( $original_wp_includes, $new_wp_includes );
+        $this->rename_populated_directory( $original_wp_includes, $new_wp_includes );
         // rm other left over WP identifying files
         if ( file_exists( $archiveDir . '/xmlrpc.php' ) ) {
             unlink( $archiveDir . '/xmlrpc.php' );
@@ -731,22 +1081,72 @@ class StaticHtmlOutput_Controller
         }
         StaticHtmlOutput_FilesHelper::delete_dir_with_files( $archiveDir . '/wp-json/' );
         // TODO: remove all text files from theme dir
+        if ( $this->_diffBasedDeploys ) {
+            $this->remove_files_idential_to_previous_export();
+        }
         $this->copyStaticSiteToPublicFolder();
         echo  'SUCCESS' ;
+    }
+    
+    public function files_are_equal( $a, $b )
+    {
+        // if image, use sha, if html, use something else
+        $pathinfo = pathinfo( $a );
+        if ( isset( $pathinfo['extension'] ) && in_array( $pathinfo['extension'], array(
+            'jpg',
+            'png',
+            'gif',
+            'jpeg'
+        ) ) ) {
+            return sha1_file( $a ) === sha1_file( $b );
+        }
+        $diff = exec( "diff {$a} {$b}" );
+        $result = $diff === '';
+        return $result;
+    }
+    
+    public function remove_files_idential_to_previous_export()
+    {
+        $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
+        $dir_to_diff_against = $this->outputPath() . '/previous-export';
+        // iterate each file in current export, check the size and contents in previous, delete if match
+        $objects = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $archiveDir, RecursiveDirectoryIterator::SKIP_DOTS ) );
+        foreach ( $objects as $current_file => $object ) {
+            
+            if ( is_file( $current_file ) ) {
+                // get relative filename
+                $filename = str_replace( $archiveDir, '', $current_file );
+                $previously_exported_file = $dir_to_diff_against . '/' . $filename;
+                // if file doesn't exist at all in previous export:
+                if ( is_file( $previously_exported_file ) ) {
+                    if ( $this->files_are_equal( $current_file, $previously_exported_file ) ) {
+                        unlink( $current_file );
+                    }
+                }
+            }
+        
+        }
+        // TODO: cleanup empty dirs in archiveDir to prevent them being attempted to export
+        $files_in_previous_export = exec( "find {$dir_to_diff_against} -type f | wc -l" );
+        $files_to_be_deployed = exec( "find {$archiveDir} -type f | wc -l" );
+        // copy the newly changed files back into the previous export dir, else will never capture changes
+        // TODO: this works the first time, but will fail the diff on subsequent runs, alternating each time`
+    }
+    
+    // default rename in PHP throws warnings if dir is populated
+    public function rename_populated_directory( $source, $target )
+    {
+        $this->recursive_copy( $source, $target );
+        StaticHtmlOutput_FilesHelper::delete_dir_with_files( $source );
     }
     
     public function remove_symlink_to_latest_archive()
     {
         global  $blog_id ;
         $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
-        
         if ( is_link( $this->outputPath() . '/latest-' . $blog_id ) ) {
-            WsLog::l( 'REMOVING SYMLINK: ' . $this->outputPath() . '/latest-' . $blog_id );
             unlink( $this->outputPath() . '/latest-' . $blog_id );
-        } else {
-            WsLog::l( 'REMOVING SYMLINK: NO LINK FOUND AT' . $this->outputPath() . '/latest-' . $blog_id );
         }
-    
     }
     
     public function create_symlink_to_latest_archive()
@@ -755,16 +1155,13 @@ class StaticHtmlOutput_Controller
         $archiveDir = file_get_contents( $this->_uploadsPath . '/WP-STATIC-CURRENT-ARCHIVE' );
         // rm and recreate
         $this->remove_symlink_to_latest_archive();
-        WsLog::l( '(RE)CREATING SYMLINK TO LATEST EXPORT FOLDER: ' . $this->outputPath() . '/latest-' . $blog_id );
         symlink( $archiveDir, $this->outputPath() . '/latest-' . $blog_id );
         echo  'SUCCESS' ;
     }
     
     public function post_export_teardown()
     {
-        WsLog::l( 'POST EXPORT CLEANUP: starting...' );
         $this->cleanup_working_files();
-        WsLog::l( 'POST EXPORT CLEANUP: complete' );
         // has SUCCESS returned already from cleanup working files..
     }
     
@@ -778,30 +1175,27 @@ class StaticHtmlOutput_Controller
         			(homepage)
         
         			[scheme] => http
-        			[host] => 172.17.0.3
+        			[host] => 172.18.0.3
         			[path] => /
         
         			(closed url segment)
         
         			[scheme] => http
-        			[host] => 172.17.0.3
+        			[host] => 172.18.0.3
         			[path] => /feed/
         
         			(file with extension)
         
         			[scheme] => http
-        			[host] => 172.17.0.3
+        			[host] => 172.18.0.3
         			[path] => /wp-content/themes/twentyseventeen/assets/css/ie8.css
         
         		*/
         // TODO: here we can allow certain external host files to be crawled
         // validate our inputs
-        
         if ( !isset( $urlInfo['path'] ) ) {
-            WsLog::l( 'PREPARING URL: Invalid URL given, aborting' );
             return false;
         }
-        
         // set what the new path will be based on the given url
         
         if ( $urlInfo['path'] != '/' ) {
@@ -850,12 +1244,14 @@ class StaticHtmlOutput_Controller
             $fileName = $fileDir . '/' . $pathInfo['filename'] . '.' . $fileExtension;
         }
         
+        // fix for # 103 - weird case with inline style images in nested subdirs
+        // should be a non-issue if using DOMDoc instead of regex parsing
+        $fileName = str_replace( ');', '', $fileName );
         // TODO: find where this extra . is coming from (current dir indicator?)
         $fileName = str_replace( '.index.html', 'index.html', $fileName );
         // remove 2 or more slashes from paths
         $fileName = preg_replace( '/(\\/+)/', '/', $fileName );
         $fileContents = $url->getResponseBody();
-        WsLog::l( 'SAVING URL: ' . $urlInfo['path'] . ' to new path' . $fileName );
         // TODO: what was the 'F' check for?1? Comments exist for a reason
         
         if ( $fileContents != '' && $fileContents != 'F' ) {

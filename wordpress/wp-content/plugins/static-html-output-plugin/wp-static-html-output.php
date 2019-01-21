@@ -4,13 +4,13 @@
  * Plugin Name: WP Static Site Generator
  * Plugin URI:  https://wp2static.com
  * Description: The optimum solution to speed up and secure your WordPress site - export to static HTML and hide all traces of WordPress from your site!
- * Version:     5.3
+ * Version:     5.8
  * Author:      Leon Stafford
  * Author URI:  https://leonstafford.github.io
  * Text Domain: static-html-output-plugin
  * Copyright (c) 2017 Leon Stafford
  * 
- * @fs_premium_only /library/StaticHtmlOutput/BunnyCDN.php, /library/StaticHtmlOutput/Dropbox.php, /library/StaticHtmlOutput/S3.php, /library/StaticHtmlOutput/GitHub.php, /library/StaticHtmlOutput/Netlify.php, /library/FTP/, /library/Github/, /library/CloudFront/, /library/Psr/, /library/S3/, /library/GuzzleHttp/
+ * @fs_premium_only /library/StaticHtmlOutput/BunnyCDN.php, /library/StaticHtmlOutput/S3.php, /library/CloudFront/, /library/S3/
  * 
  * @package     WP_Static_HTML_Output
  */
@@ -21,9 +21,11 @@ if ( !function_exists( 'wpsho_fr' ) ) {
         global  $wpsho_fr ;
         
         if ( !isset( $wpsho_fr ) ) {
+            // Activate multisite network integration.
             if ( !defined( 'WP_FS__PRODUCT_2226_MULTISITE' ) ) {
                 define( 'WP_FS__PRODUCT_2226_MULTISITE', true );
             }
+            // Include Freemius SDK.
             require_once dirname( __FILE__ ) . '/freemius/start.php';
             $wpsho_fr = fs_dynamic_init( array(
                 'id'             => '2226',
@@ -38,7 +40,9 @@ if ( !function_exists( 'wpsho_fr' ) ) {
                 'is_require_payment' => true,
             ),
                 'menu'           => array(
-                'slug' => 'wp-static-html-output',
+                'slug'    => 'wp-static-html-output',
+                'support' => false,
+                'network' => false,
             ),
                 'is_live'        => true,
             ) );
@@ -59,6 +63,9 @@ if ( !function_exists( 'wpsho_fr' ) ) {
     require_once 'library/StaticHtmlOutput/FilesHelper.php';
     require_once 'library/StaticHtmlOutput.php';
     require_once 'library/StaticHtmlOutput/FTP.php';
+    require_once 'library/StaticHtmlOutput/Netlify.php';
+    require_once 'library/StaticHtmlOutput/GitHub.php';
+    require_once 'library/StaticHtmlOutput/Dropbox.php';
     StaticHtmlOutput_Controller::init( __FILE__ );
     /**
      * Settings link for WP Static HTML Output plugin
@@ -90,7 +97,7 @@ if ( !function_exists( 'wpsho_fr' ) ) {
          */
         function wp_static_html_output_server_side_export()
         {
-            $plugin = StaticHtmlOutput::getInstance();
+            $plugin = StaticHtmlOutput_Controller::getInstance();
             $plugin->doExportWithoutGUI();
             wp_die();
             return null;

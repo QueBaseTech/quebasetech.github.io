@@ -1,47 +1,74 @@
 === WP Static Site Generator ===
 Contributors: leonstafford,cache1
 Donate link: https://www.paypal.me/leonjstafford
-Tags: static,cache,wp super cache,wp fastest cache,w3 total cache,security,export,s3,dropbox,github,netlify,bunnycdn,html
+Tags: static site generator,cache,wp super cache,wp fastest cache,w3 total cache,security,export,s3,dropbox,github,netlify,bunnycdn,html
 Requires at least: 3.2
 Tested up to: 4.9.8
-Requires PHP: 5
-Stable tag: 5.3
+Requires PHP: 5.4
+Stable tag: 5.8
 
-
-The optimum solution to speed up and secure your WordPress site - export to static HTML and hide all traces of WordPress from your site!
 
 == Description ==
 
-The optimum solution to speed up and secure your WordPress site - export to static HTML and hide all traces of WordPress from your site!
+WP Static Site Generator protects the admin area of your WP site, whilst allowing you to serve your content to users on free and fast hosting options. 
 
-Tired of your WordPress sites getting hacked? 
+Keep using WordPress for what it's best at - managing content, but remove the security and performance headaches by publishing the site as static HTML.
+
+Tired of your WordPress sites getting hacked?
 
 A static site closes all the doors that an out of date WordPress, theme or plugin can leave open.
 
-Your visitors not sticking around due to your site loading too slow? 
-
-A pre-generated static site can outperform popular caching plugins like WP Super Cache, WP Fastest Cache and W3 Total Cache.
-
-
-[**https://wp2static.com**](https://wp2static.com/)
+[youtube https://www.youtube.com/watch?v=JmU6lrB8bRs]
 
 = Features =
 
- * protects you from malicious attacks/malware
- * speeds up your site by not hitting the database or executing any PHP code
- * generates a standalone, static html copy of your whole WordPress website
+ * publishes a standalone, static html copy of your whole WordPress website
  * removes tell-tale signs your site is running WordPress, making it unattractive to hackers
  * auto-deploy to a folder on your server, a ZIP file, FTP server, S3, Dropbox, GitHub, Netlify or BunnyCDN
  * schedule unattended exports via the WP Crontrol plugin or by hitting the custom hook
  * desktop notifications alert you to when exports are complete
- * multi-language support (English/Japanese currently, Spanish and Chinese in progress)
- * realtime logs visible during / saved after export
- * asynchronous exports for deployment methods overcome hosting limitations for large site exports
+
+
+= Benefits =
+
+ * protects you from malicious attacks/malware
+ * speeds up your site by not hitting the database or executing any PHP code
+ * allows you to host your site for free on GitHub Pages, Netlify or the free tier of AWS S3, Azure, etc
+ * allows you to deploy to crazy fast hosting options, like S3, behind CloudFront
+ * have a nice development -> staging -> production workflow and integrate with your CI tools
+
+
+= Who loves this? =
+
+ - Digital Agencies with many sites to manage, no need to worry about WP/plugin updates for client sites
+ - Internet Marketers can create a bunch of quick sites/landing pages that load fast and are free to host
+ - Solo website owners and content creators who like WordPress but don't want to worry about how to secure it
+ - Operations people at large corporations don't often like dealing with WordPress, this allows them to close the security holes and have more control over the hosting
+ - Budget conscious people like free hosting (who doesn't?!?)
+ - Government agencies who have strict security requirements, but have users who prefer to use WordPress
+ * Thos who want to use it to archive an old WordPress website, keeping the content online, but not worrying about keeping WP up to date
 
 This plugin produces a static HTML version of your wordpress install, incredibly useful for anyone who would like the publishing power of wordpress but whose webhost doesn't allow dynamic PHP driven sites - such as GitHub Pages. You can run your development site on a different domain or offline, and the plugin will change all relevant URLs when you publish your site. It's a simple but powerful plugin, and after hitting the publish button, the plugin will output a ZIP file of your entire site, ready to upload straight to it's new home. 
 
+[**https://wp2static.com**](https://wp2static.com/)
 
-Developed by [**Leon Stafford**](http://leonstafford.github.io). If you have any questions about this plugin's usage, installation or development, please email me at: [leonstafford@protonmail.com](mailto:leonstafford@protonmail.com)
+= Getting started =
+
+Here is the basic premise:
+
+You need 2 URLs of some sort (they can be on the same server, different servers, subdomains, etc).
+
+ - 1st URL is for where you keep WP - this doesn't need to be accessible or known to anyone but you, if you're the only one working on your content
+
+ - 2nd URL is where you'll "publish" the static version of your site to. This is likely to be your main domain (ie, http://mywordpresssite.com).
+
+That said, you can install the plugin and do an easy test without any other configuration. This will publish a static version to a subdirectory, such as http://mywordpresssite.com/mystatictest/. That's a good way to check the static site is publishing properly, then you can switch to another deployment option, such as FTP or GitHub Pages and deploy to your live site.
+
+As WordPress allows infinite customization and configurations, I don't think any plugin author would be willing to guarantee complete compatibility with every theme, plugin and custom coding on every site. But my aim is to get as high a % of people as possible able to take advantage of static hosting with their WP site.
+
+
+
+Developed by [**Leon Stafford**](http://leonstafford.github.io). If you have any questions about this plugin's usage, installation or development, please email me at: [help@wp2static.com](mailto:help@wp2static.com)
 
 == Installation ==
 
@@ -87,7 +114,11 @@ Anywhere that allows HTML files to be uploaded, ie:
 
 Everyone's WordPress hosting environment and configuration is unique, with different plugins, themes, PHP versions, to name a few. Whilst the plugin does its best to support all environments, sometimes you'll encounter a new issue. Sometimes we can adjust the settings in the plugin to overcome an issue, other times, it will require a bugfix and a new release of the plugin (usually a quick process). 
 
-When you have an issue, send the contents of your "Export Log" on the plugin screen to the developer, at [leonstafford@protonmail.com](mailto:leonstafford@protonmail.com). He'll usually respond within 12 hrs, often sooner.
+When you have an issue, send the contents of your "Export Log" on the plugin screen to the developer, at [help@wp2static.com](mailto:help@wp2static.com). He'll usually respond within 12 hrs, often sooner.
+
+= My exported site looks weird / missing styles or images =
+
+See our [troubleshooting guide](https://docs.wp2static.com/en/troubleshooting/start-export/check-site/)
 
 == Screenshots ==
 
@@ -95,6 +126,43 @@ When you have an issue, send the contents of your "Export Log" on the plugin scr
 2. The main interface (Japanese)
 
 == Changelog ==
+
+= 5.8 =
+
+ * Bugfix: Allow activation (with warning) for PHP < 5.4 users
+
+= 5.7 =
+
+ * Bugfix: Allow for WPMU/network site activation
+ * Bugfix: Include gallery files for NextGEN Gallery 
+
+= 5.6 =
+
+ * Bugfix: Major bug preventing certain files being crawled has been fixed
+ * Improvement: Partial support for WPMU/network site activation
+
+= 5.5.1 =
+
+ * Improvement: Deploy times reduced by ~ 30%, amount of data transferred by client minimized
+ * Improvement: Diff-based deploys to only copy changed files (for folder, S3 and FTP deployments only)
+ * Improvement: Don't block other plugin usage if ZIP extension is not available
+ * Improvement: UX - 1-click same-server deployments; defaults to same-server for new installs
+ * Improvement: De-cluttered UI
+
+= 5.4.2 =
+
+ * Bugfix: include all nested directories when building initial list to crawl
+
+= 5.4.1 =
+
+ * Bugfix: missing library for GitHub Pages export in free version
+
+= 5.4 =
+
+ * Improvement: more deployment options included (Netlify, GitHub Pages)
+ * Bugfix: certain cases where inline style images are written with incorrect filenames
+ * Bugfix: fix for cron-scheduled exports failing 
+ * Bugfix: offline copy not rewriting home URLs
 
 = 5.3 =
 
@@ -372,6 +440,44 @@ Initial release to Wordpress community
 
 == Upgrade Notice ==
 
+
+= 5.8 =
+
+ * Bugfix: Allow activation (with warning) for PHP < 5.4 users
+
+= 5.7 =
+
+ * Bugfix: Allow for WPMU/network site activation
+ * Bugfix: Include gallery files for NextGEN Gallery 
+
+= 5.6 =
+
+ * Bugfix: Major bug preventing certain files being crawled has been fixed
+ * Improvement: Partial support for WPMU/network site activation
+
+= 5.5.1 =
+
+ * Improvement: Deploy times reduced by ~ 30%, amount of data transferred by client minimized
+ * Improvement: Diff-based deploys to only copy changed files (for folder, S3 and FTP deployments only)
+ * Improvement: Don't block other plugin usage if ZIP extension is not available
+ * Improvement: UX - 1-click same-server deployments; defaults to same-server for new installs
+ * Improvement: De-cluttered UI
+
+= 5.4.2 =
+
+ * Bugfix: include all nested directories when building initial list to crawl
+
+= 5.4.1 =
+
+ * Bugfix: missing library for GitHub Pages export in free version
+
+= 5.4 =
+
+ * Improvement: more deployment options included (Netlify, GitHub Pages)
+ * Bugfix: certain cases where inline style images are written with incorrect filenames
+ * Bugfix: fix for cron-scheduled exports failing 
+ * Bugfix: offline copy not rewriting home URLs
+
 = 5.3 =
 
  * Bugfix: subdir WP installations not exporting properly
@@ -445,13 +551,13 @@ Critical upgrade with bugfixes and improvements
 
 = 2.8 =
 
-Critical upgrade - recommended for all users. If you have troubles upgrading, please contact the developer at leonstafford@protonmail.com for assistance.
+Critical upgrade - recommended for all users. If you have troubles upgrading, please contact the developer at help@wp2static.com for assistance.
 
  * Bugfix: critical fix for Dropbox, BunnyCDN and Netlify exports
 
 = 2.7 =
 
-Critical upgrade - recommended for all users. If you have troubles upgrading, please contact the developer at leonstafford@protonmail.com for assistance.
+Critical upgrade - recommended for all users. If you have troubles upgrading, please contact the developer at help@wp2static.com for assistance.
 
  * Bugfix: Fixes major issue where a failed first export blocked subsequent ones unless page was refreshed
  * Bugfix: Plugin was not respecting the Output Directory Override

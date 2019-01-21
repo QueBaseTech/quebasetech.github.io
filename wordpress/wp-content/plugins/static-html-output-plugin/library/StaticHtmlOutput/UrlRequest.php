@@ -1223,7 +1223,7 @@ class StaticHtmlOutput_UrlRequest
         // looks only for urls starting with base name, also needs to search for relative links
         if (
             preg_match_all(
-                '/' . str_replace('/', '\/', $baseUrl) . '[^"\'#\? ]+/i', // find this
+                '/' . str_replace('/', '\/', $baseUrl) . '[^"\'#\?); ]+/i',
                 $this->_response['body'], // in this
                 $matches // save matches into this array
             )
@@ -1267,10 +1267,10 @@ class StaticHtmlOutput_UrlRequest
 		
 	}
 
-	public function replaceBaseUrl($oldBaseUrl, $newBaseUrl, $absolutePaths = false)
+	public function replaceBaseUrl($oldBaseUrl, $newBaseUrl, $allowOfflineUsage, $absolutePaths = false, $useBaseHref = true)
 	{
-		// TODO: don't rewrite mailto links unless specified, re #30
 
+		// TODO: don't rewrite mailto links unless specified, re #30
 		if ($this->isRewritable())
 		{
 
@@ -1296,10 +1296,53 @@ class StaticHtmlOutput_UrlRequest
 
 				$responseBody = str_replace($newDomain, '', $responseBody);
 
-				$responseBody = str_replace('<head>', "<head>\n<base href=\"" . esc_attr($newBaseUrl) . "/\" />\n", $responseBody);
-			} else {
+		// TODO: use DOMDoc here
+				if ($useBaseHref)
+				{
+					$responseBody = str_replace('<head>', "<head>\n<base href=\"" . esc_attr($newBaseUrl) . "/\" />\n", $responseBody);
+				}
+				else
+				{
+					$responseBody = str_replace('<head>', "<head>\n<base href=\"/\" />\n", $responseBody);
+				}
+			} elseif ($allowOfflineUsage) {
+          // detect urls starting with our domain and append index.html to the end if they end in /
+          $xml = new DOMDocument(); 
+        
+          // prevent warnings, via https://stackoverflow.com/a/9149241/1668057
+          libxml_use_internal_errors(true);
+          $xml->loadHTML($responseBody); 
+          libxml_use_internal_errors(false);
 
-				$responseBody = str_replace($oldDomain, $newDomain, $responseBody);
+          foreach($xml->getElementsByTagName('a') as $link) { 
+             $original_link = $link->getAttribute("href");
+             
+              // process links from our site only 
+              if (strpos($original_link, $oldDomain) !== false) {
+              }
+
+             $link->setAttribute('href', $original_link . 'index.html');
+          }
+          $responseBody =  $xml->saveHtml(); 
+
+          $responseBody = str_replace('https://' . $oldDomain . '/', '', $responseBody);
+          $responseBody = str_replace('https://' . $oldDomain . '', '', $responseBody);
+          $responseBody = str_replace('http://' . $oldDomain . '/', '', $responseBody);
+          $responseBody = str_replace('http://' . $oldDomain . '', '', $responseBody);
+          $responseBody = str_replace('//' . $oldDomain . '/', '', $responseBody);
+          $responseBody = str_replace('//' . $oldDomain . '', '', $responseBody);
+          $responseBody = str_replace($oldDomain . '/', '', $responseBody);
+          $responseBody = str_replace($oldDomain, '', $responseBody);
+			} else {
+          // note: as it's stripping urls first, the replacing, it will not keep the desired
+          // url protocol if the old url is http and the new is https, for example 
+          $responseBody = str_replace($oldDomain, $newDomain, $responseBody);
+
+          // do another pass, detecting any incorrect protocols and correcting to the desired one
+          $responseBody = str_replace('http://' . $newDomain, $newBaseUrl, $responseBody);
+          $responseBody = str_replace('https://' . $newDomain, $newBaseUrl, $responseBody);
+
+          // TODO: cater for protocol rel links
 
 			}
 
